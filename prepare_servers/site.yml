@@ -1,0 +1,3 @@
+#- include: setup/common.yml
+#- include: setup/local.yml
+- include: setup/manager.yml

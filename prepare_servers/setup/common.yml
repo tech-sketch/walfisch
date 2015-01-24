@@ -1,0 +1,10 @@
+- hosts: all
+  sudo: yes
+  roles:
+    - common/os_setup/resolv
+    - common/os_setup/timezone
+    - common/yum_install/openvnet
+    - common/yum_install/iproute2
+    - common/yum_install/openvswitch
+    - common/yum_install/docker
+    - common/vnet_setup/ruby

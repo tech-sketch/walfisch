@@ -1,0 +1,12 @@
+- name: change zone
+  lineinfile: dest="/etc/sysconfig/clock" regexp="^ZONE=" line="ZONE='Asia/Tokyo'"
+
+- name: check localtime
+  shell: cmp /usr/share/zoneinfo/Asia/Tokyo /etc/localtime
+  register: diff_result
+  failed_when: diff_result.rc not in [0, 1]
+  changed_when: false
+
+- name: change localtime
+  shell: cp /usr/share/zoneinfo/Asia/Tokyo /etc/localtime
+  when: diff_result.rc == 1

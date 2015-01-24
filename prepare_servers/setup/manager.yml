@@ -1,0 +1,6 @@
+- hosts: manager
+  sudo: yes
+  roles:
+    - common/vnet_setup/mysql
+    - common/vnet_setup/redis
+    - common/vnet_setup/db

@@ -1,0 +1,14 @@
+- name: set PATH
+  lineinfile: dest="~/.bash_profile" line="PATH=$PATH:/opt/axsh/openvnet/ruby/bin;export PATH"
+  register: result
+
+- name: load PATH
+  shell: /bin/bash -lc "source ~/.bash_profile"
+  when: result|changed
+
+- name: build vnctl
+  shell: bundle install
+         chdir=/opt/axsh/openvnet/vnctl
+  environment: 
+    PATH: "{{ ansible_env.PATH }}:/opt/axsh/openvnet/ruby/bin"
+  when: result|changed

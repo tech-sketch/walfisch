@@ -1,0 +1,5 @@
+- hosts: all
+  sudo: yes
+  roles:
+    - local/nw_setup/ovs_bridge
+    - local/vnet_setup/config

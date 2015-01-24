@@ -1,0 +1,9 @@
+- name: drop db
+  shell: /bin/bash -c "{{ item }}"
+         chdir=/opt/axsh/openvnet/vnet
+  environment:
+    PATH: "{{ ansible_env.PATH }}:/opt/axsh/openvnet/ruby/bin"
+  with_items:
+    - bundle exec rake db:drop
+    - bundle exec rake db:create
+    - bundle exec rake db:init

@@ -1,0 +1,5 @@
+- name: add nameserver 8.8.8.8
+  lineinfile: dest="/etc/resolv.conf" line="nameserver 8.8.8.8"
+
+- name: add reopen option
+  lineinfile: dest="/etc/resolv.conf" line="options single-request-reopen"

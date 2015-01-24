@@ -1,0 +1,6 @@
+- name: install openstack icehouse rdo
+  yum: name="https://repos.fedorapeople.org/repos/openstack/openstack-icehouse/rdo-release-icehouse-4.noarch.rpm" 
+       state=present
+
+- name: install iproute2
+  yum: name="iproute" state=latest
