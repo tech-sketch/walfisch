@@ -1,16 +1,16 @@
 DEVICE=br0
 BOOTPROTO=static
 ONBOOT=yes
-IPADDR={{ ansible_eth1.ipv4.address }}
-NETMASK={{ ansible_eth1.ipv4.netmask }}
+IPADDR={{ ansible_local.vnet.agent.service.addr }}
+NETMASK={{ ansible_local.vnet.agent.service.mask }}
 DEVICETYPE=ovs
 TYPE=OVSBridge
 HOTPLUG=no
 OVS_EXTRA="
  set bridge     ${DEVICE} protocols=OpenFlow10,OpenFlow12,OpenFlow13 --
  set bridge     ${DEVICE} other_config:disable-in-band=true --
- set bridge     ${DEVICE} other-config:datapath-id=0000{{ ansible_eth1.macaddress|replace(":", "") }} --
- set bridge     ${DEVICE} other-config:hwaddr={{ ansible_eth1.macaddress }} --
+ set bridge     ${DEVICE} other-config:datapath-id=0000{{ ansible_local.vnet.agent.service.mac|replace(":", "") }} --
+ set bridge     ${DEVICE} other-config:hwaddr={{ ansible_local.vnet.agent.service.mac }} --
  set-fail-mode  ${DEVICE} standalone --
  set-controller ${DEVICE} tcp:127.0.0.1:6633
 "

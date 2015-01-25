@@ -8,12 +8,12 @@
             owner=root group=root mode=0644
   when: not ifcfg_br0.stat.exists
 
-- name: remove original ifcfg-eth1
-  file: path="/etc/sysconfig/network-scripts/ifcfg-eth1" state=absent
+- name: remove original ifcfg-ethx
+  file: path="/etc/sysconfig/network-scripts/ifcfg-{{ ansible_local.vnet.agent.ether }}" state=absent
   when: not ifcfg_br0.stat.exists
 
-- name: create ifcfg-eth1
-  template: src="ifcfg-eth1.j2" dest="/etc/sysconfig/network-scripts/ifcfg-eth1" 
+- name: create ifcfg-ethx
+  template: src="ifcfg-ethx.j2" dest="/etc/sysconfig/network-scripts/ifcfg-{{ ansible_local.vnet.agent.ether }}" 
             owner=root group=root mode=0644
   when: not ifcfg_br0.stat.exists
   notify: restart network

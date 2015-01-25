@@ -1,0 +1,26 @@
+- name: setup common.conf
+  replace: dest="/etc/openvnet/common.conf" "{{ item }}" 
+           replace="{{ ansible_local.vnet.manager.manage.addr }}"
+  with_items:
+    - regexp="127.0.0.1"
+    - regexp="localhost"
+
+- name: setup vnmgr.conf
+  replace: dest="/etc/openvnet/vnmgr.conf" regexp="127.0.0.1" 
+           replace="{{ ansible_local.vnet.manager.manage.addr }}"
+
+- name: setup webapi.conf
+  replace: dest="/etc/openvnet/webapi.conf" regexp="127.0.0.1" 
+           replace="{{ ansible_local.vnet.manager.manage.addr }}"
+
+- name: setup vna.conf
+  replace: dest="/etc/openvnet/vna.conf" regexp="127.0.0.1" 
+           replace="{{ ansible_local.vnet.agent.manage.addr }}"
+
+- name: setup vna name
+  replace: dest="/etc/openvnet/vna.conf" regexp='"vna"' 
+           replace='"vna{{ ansible_local.vnet.agent.manage.addr|replace(".","") }}"'
+
+- name: setup vnctl.conf
+  template: src="vnctl.conf.j2" dest="/etc/openvnet/vnctl.conf"
+            owner=root group=root mode=0644

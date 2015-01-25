@@ -1,0 +1,12 @@
+- name: create facts dir
+  file: path="{{ fact_path }}" state=directory owner=root group=root mode=0755
+
+- name: check vnet.fact
+  stat: path="{{ fact_path }}/vnet.fact"
+  register: vnet_fact
+  changed_when: false
+
+- name: create vnet fact
+  template: src="vnet.fact.j2" dest="{{ fact_path }}/vnet.fact"
+            owner=root group=root mode=0644
+  when: not vnet_fact.stat.exists

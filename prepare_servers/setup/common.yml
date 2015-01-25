@@ -1,11 +1,16 @@
 - hosts: all
   sudo: yes
+  vars_files:
+    - ../vars/consts.yml
   roles:
-    - common/os_setup/resolv
-    - common/os_setup/timezone
-    - common/yum_install/openvnet
-    - common/yum_install/iproute2
-    - common/yum_install/openvswitch
-    - common/yum_install/docker
-    - common/yum_install/update
-    - common/vnet_setup/ruby
+    - facts/load
+    - os_setup/resolv
+    - os_setup/timezone
+    - yum_install/openvnet
+    - yum_install/iproute2
+    - yum_install/openvswitch
+    - yum_install/docker
+    - yum_install/update
+    - nw_setup/ovs_bridge
+    - vnet_setup/ruby
+    - vnet_setup/config
