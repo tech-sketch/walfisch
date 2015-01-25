@@ -4,6 +4,7 @@
     - ../vars/consts.yml
   roles:
     - facts/load
+    - nw_setup/iptables
     - os_setup/resolv
     - os_setup/timezone
     - yum_install/openvnet
