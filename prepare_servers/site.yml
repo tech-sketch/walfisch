@@ -1,3 +1,4 @@
 - include: setup/common.yml
+- include: setup/facts.yml
 - include: setup/local.yml
 - include: setup/manager.yml

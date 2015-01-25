@@ -1,0 +1,9 @@
+- name: create facts dir
+  file: path="{{ fact_path }}" state=directory
+        owner=root group=root mode=0755
+
+- name: create facts
+  template: src="manager.fact.j2" dest="{{ fact_path }}/manager.fact"
+            owner=root group=root mode=0644
+  
+  
