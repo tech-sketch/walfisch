@@ -7,4 +7,5 @@
     - common/yum_install/iproute2
     - common/yum_install/openvswitch
     - common/yum_install/docker
+    - common/yum_install/update
     - common/vnet_setup/ruby

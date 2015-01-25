@@ -1,4 +1,4 @@
-- name: setup common.conf (registry)
+- name: setup common.conf
   replace: dest="/etc/openvnet/common.conf" "{{ item }}" replace="{{ manager_ipaddr }}"
   with_items:
     - regexp="127.0.0.1"
