@@ -1,10 +1,64 @@
-#!/bin/bash
+#!/usr/bin/python
 
-eval $(perl -lne 'while(/\s?([^=\s]+)\s?=\s?(\"(?:\\\"|[^\"])+\"|\x27(?:\x27\\\x27\x27|[^\x27])+\x27|\S+)\s?/g){print "$1=$2"}' $1)
+import re
+import os
+from ansible.module_utils.basic import *
 
-echo $name >> /tmp/log
+CMD01 = 'docker run --hostname="%(name)s" --name="%(name)s" --net="none" -i -t -d %(image)s /bin/bash'
+CMD02 = 'docker inspect --format {{.State.Pid}} %(id)s'
+CMD03 = 'ln -s /proc/%(pid)s/ns/net /var/run/netns/%(pid)s'
+CMD04 = 'ip link add %(bif)s type veth peer name %(cif)s'
+CMD05 = 'ip link set %(bif)s up'
+CMD06 = 'ovs-vsctl add-port %(bridge)s %(bif)s'
+CMD07 = 'ip link set %(cif)s netns %(pid)s'
+CMD08 = 'ip netns exec %(pid)s ip link set dev %(cif)s address %(mac)s'
+CMD09 = 'ip netns exec %(pid)s ip addr add %(ip_addr)s/%(nw_mask)s dev %(cif)s'
+CMD10 = 'ip netns exec %(pid)s ip link set %(cif)s up'
 
-CONTAINER_ID=`docker run --hostname=$name --name=$name --net="none" -i -t -d $image /bin/bash`
+def command(cmd):
+  (rc, out, err) = module.run_command(cmd)
+  if rc != 0:
+    raise Exception, err
+  return out
 
-echo '{"chanded":true,"rc":0}'
-exit 0
+def get_bridge():
+  out = command("ovs-vsctl show")
+  return re.search(r'.*Bridge "(\w+)".*', out).group(1)
+
+def main():
+  try:
+    bridge = get_bridge()
+
+    id = command(CMD01 % {"name": module.params['name'], "image": module.params['image']}).rstrip()
+    pid = command(CMD02 % {"id": id}).rstrip()
+
+    if not os.path.exists("/var/run/netns"):
+      os.mkdir("/var/run/netns")
+
+    command(CMD03 % {"pid": pid})
+    command(CMD04 % {"bif": module.params['bif'], "cif": module.params['cif']})
+    command(CMD05 % {"bif": module.params['bif']})
+    command(CMD06 % {"bridge": bridge, "bif": module.params['bif']})
+    command(CMD07 % {"cif": module.params['cif'], "pid": pid})
+    command(CMD08 % {"pid": pid, "cif": module.params['cif'], "mac": module.params['mac']})
+    command(CMD09 % {"pid": pid, "ip_addr": module.params['ip_addr'], "nw_mask": module.params['nw_mask'], "cif": module.params['cif']})
+    command(CMD10 % {"pid": pid, "cif": module.params['cif']})
+
+    module.exit_json(changed=True, msg='%s %s'% (id, pid))
+
+  except Exception, err:
+    module.fail_json(msg='%s' % err.message)
+
+module = AnsibleModule(
+  argument_spec=dict(
+    name=dict(default=None, required=True),
+    image=dict(default=None, required=True),
+    bif=dict(default=None, require=True),
+    cif=dict(default=None, require=True),
+    ip_addr=dict(default=None, require=True),
+    mac=dict(default=None, require=True),
+    nw_mask=dict(default=None, require=True),
+  ),
+)
+
+main()

@@ -1,5 +1,24 @@
+name: "vnet1"
+virtual:
+  name: "internal"
+  nw_addr: "192.168.99.0"
+  nw_mask: 24
 containers:
-  - name: container11
-    aaa: aaa
-  - name: container12
-    aaa: aaa
+  - name:           "container11"
+    ip_addr:        "192.168.99.11"
+    mac_addr:       "10:00:00:00:03:11"
+    bridge_if:      "veth11b"
+    container_if:   "veth11c"
+    securigy_group: "sg-1"
+  - name:           "container12"
+    ip_addr:        "192.168.99.12"
+    mac_addr:       "10:00:00:00:03:12"
+    bridge_if:      "veth12b"
+    container_if:   "veth12c"
+    securigy_group: "sg-2"
+  - name:           "container13"
+    ip_addr:        "192.168.99.13"
+    mac_addr:       "10:00:00:00:03:13"
+    bridge_if:      "veth13b"
+    container_if:   "veth13c"
+    securigy_group: "sg-3"
