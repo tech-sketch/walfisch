@@ -1,0 +1,10 @@
+- hosts: vnet1
+  sudo: yes
+  vars_files:
+    - group_vars/consts.yml
+    - host_vars/vnet1.yml
+  tasks:
+    - start_container: name=test image=centos_sshd
+      register: result
+#      with_items: containers
+    - debug: msg="{{ result }}"

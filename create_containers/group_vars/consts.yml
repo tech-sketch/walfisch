@@ -1,0 +1,3 @@
+fact_path: ~/.facts
+docker_path: ~/docker
+container_image: centos_sshd

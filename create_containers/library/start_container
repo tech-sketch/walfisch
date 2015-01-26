@@ -1,0 +1,10 @@
+#!/bin/bash
+
+eval $(perl -lne 'while(/\s?([^=\s]+)\s?=\s?(\"(?:\\\"|[^\"])+\"|\x27(?:\x27\\\x27\x27|[^\x27])+\x27|\S+)\s?/g){print "$1=$2"}' $1)
+
+echo $name >> /tmp/log
+
+CONTAINER_ID=`docker run --hostname=$name --name=$name --net="none" -i -t -d $image /bin/bash`
+
+echo '{"chanded":true,"rc":0}'
+exit 0

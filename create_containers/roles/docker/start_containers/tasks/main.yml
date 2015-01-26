@@ -1,0 +1,19 @@
+- name: start container
+  shell: docker run --hostname={{ item.name }} --name={{ item.name }} --net="none" -i -t -d {{ container_image }} /bin/bash
+  register: container_id
+
+- debug: msg="{{ item.stdout }}"
+  with_items: container_id.results
+
+#- name: retrieve container pid
+#  shell: docker inspect {{ item.stdout }} | grep Pid | gawk '{print gensub(/.* ([0-9]+),.*/,"\\1","")}'
+#  register: pid
+#  with_items: container_id.results
+#
+#- debug: msg="{{ item.stdout }}"
+#  with_items: pid.results
+#
+#- name: link proc to netns
+#  shell: ln -s /proc/{{ item.stdout }}/ns/net /var/run/netns/{{ item.stdout }}
+#  with_items: pid.results
+

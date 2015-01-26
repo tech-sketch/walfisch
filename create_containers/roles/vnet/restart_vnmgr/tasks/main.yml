@@ -1,0 +1,2 @@
+- name: start vnet-vnmgr
+  service: name="vnet-vnmgr" state=restarted
