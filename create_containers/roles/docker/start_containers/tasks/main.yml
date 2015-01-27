@@ -1,19 +1,16 @@
-- name: start container
-  shell: docker run --hostname={{ item.name }} --name={{ item.name }} --net="none" -i -t -d {{ container_image }} /bin/bash
-  register: container_id
+- name: start docker service
+  service: name="docker" state="started"
 
-- debug: msg="{{ item.stdout }}"
-  with_items: container_id.results
+- name: remove containers file
+  file: path="{{ containers_file }}" state=absent
 
-#- name: retrieve container pid
-#  shell: docker inspect {{ item.stdout }} | grep Pid | gawk '{print gensub(/.* ([0-9]+),.*/,"\\1","")}'
-#  register: pid
-#  with_items: container_id.results
-#
-#- debug: msg="{{ item.stdout }}"
-#  with_items: pid.results
-#
-#- name: link proc to netns
-#  shell: ln -s /proc/{{ item.stdout }}/ns/net /var/run/netns/{{ item.stdout }}
-#  with_items: pid.results
-
+- name: start containers
+  start_container: name={{ item.name }}
+                   image={{ container_image }}
+                   bif={{ item.bridge_if }}
+                   cif={{ item.container_if }}
+                   ip_addr={{ item.ip_addr }}
+                   mac={{ item.mac_addr }}
+                   nw_mask={{ virtual.nw_mask }}
+                   cfile={{ containers_file }}
+  with_items: containers

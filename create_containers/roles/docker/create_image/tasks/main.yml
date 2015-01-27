@@ -22,4 +22,5 @@
 - name: create docker image
   shell: docker build -t {{ container_image }} .
          chdir="{{ docker_path }}"
+  when: not Dockerfile.stat.exists
 

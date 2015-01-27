@@ -1,0 +1,5 @@
+- name: stop_containers
+  stop_containers: cfile={{ containers_file }}
+
+- name: remove containers file
+  file: path="{{ containers_file }}" state=absent

@@ -44,7 +44,10 @@ def main():
     command(CMD09 % {"pid": pid, "ip_addr": module.params['ip_addr'], "nw_mask": module.params['nw_mask'], "cif": module.params['cif']})
     command(CMD10 % {"pid": pid, "cif": module.params['cif']})
 
-    module.exit_json(changed=True, msg='%s %s'% (id, pid))
+    with open(module.params['cfile'],'a') as cfile:
+      cfile.write('%s,%s,%s,%s\n' % (id, pid, module.params['bif'], module.params['cif']))
+    
+    module.exit_json(changed=True, rc=0)
 
   except Exception, err:
     module.fail_json(msg='%s' % err.message)
@@ -58,6 +61,7 @@ module = AnsibleModule(
     ip_addr=dict(default=None, require=True),
     mac=dict(default=None, require=True),
     nw_mask=dict(default=None, require=True),
+    cfile=dict(default=None, required=True),
   ),
 )
 

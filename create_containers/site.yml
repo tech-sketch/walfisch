@@ -1,1 +1,4 @@
 - include: prepare_container.yml
+- include: start_vnet.yml
+- include: start_containers.yml
+

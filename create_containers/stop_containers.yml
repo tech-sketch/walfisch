@@ -3,4 +3,4 @@
   vars_files:
     - group_vars/consts.yml
   roles:
-    - docker/create_image
+    - docker/stop_containers

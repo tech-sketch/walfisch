@@ -3,7 +3,6 @@
   vars_files:
     - group_vars/consts.yml
   roles:
-    - facts/load
     - vnet/restart_vnmgr
     - vnet/restart_webapi
 
@@ -12,5 +11,4 @@
   vars_files:
     - group_vars/consts.yml
   roles:
-    - facts/load
     - vnet/restart_vna
