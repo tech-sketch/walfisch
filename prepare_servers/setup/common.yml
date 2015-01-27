@@ -4,14 +4,15 @@
     - ../vars/consts.yml
   roles:
     - facts/load
-    - nw_setup/iptables
+    - os_setup/sshd
     - os_setup/resolv
     - os_setup/timezone
+    - nw_setup/iptables
+    - nw_setup/ovs_bridge
     - yum_install/openvnet
     - yum_install/iproute2
     - yum_install/openvswitch
     - yum_install/docker
     - yum_install/update
-    - nw_setup/ovs_bridge
     - vnet_setup/ruby
     - vnet_setup/config
