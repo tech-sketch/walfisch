@@ -2,25 +2,25 @@
   service: name="docker" state=restarted
 
 - name: create dockerfile dir
-  file: path="{{ docker_path }}" state=directory owner=root group=root mode=0755
+  file: path="{{ consts.docker_path }}" state=directory owner=root group=root mode=0755
 
 - name: check Dockerfile
-  stat: path="{{ docker_path }}/Dockerfile"
+  stat: path="{{ consts.docker_path }}/Dockerfile"
   register: Dockerfile
   changed_when: false
 
 - name: set dockerfile
-  template: src="Dockerfile.j2" dest="{{ docker_path }}/Dockerfile"
+  template: src="Dockerfile.j2" dest="{{ consts.docker_path }}/Dockerfile"
             owner=root group=root mode=0644
   when: not Dockerfile.stat.exists
 
 - name: set sshd.sh
-  template: src="sshd.sh.j2" dest="{{ docker_path }}/sshd.sh"
+  template: src="sshd.sh.j2" dest="{{ consts.docker_path }}/sshd.sh"
             owner=root group=root mode=0644
   when: not Dockerfile.stat.exists
 
 - name: create docker image
-  shell: docker build -t {{ container_image }} .
-         chdir="{{ docker_path }}"
+  shell: docker build -t {{ consts.container_image }} .
+         chdir="{{ consts.docker_path }}"
   when: not Dockerfile.stat.exists
 

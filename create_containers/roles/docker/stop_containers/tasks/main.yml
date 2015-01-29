@@ -1,5 +1,5 @@
 - name: stop_containers
-  stop_containers: cfile={{ containers_file }}
+  stop_containers: cfile="{{ consts.containers_file }}"
 
 - name: remove containers file
-  file: path="{{ containers_file }}" state=absent
+  file: path="{{ consts.containers_file }}" state=absent

@@ -27,26 +27,34 @@ def get_bridge():
 
 def main():
   try:
+    name   = module.params['container']['name']
+    ipaddr = module.params['container']['ip_addr']
+    mac    = module.params['container']['mac_addr']
+    bif    = module.params['container']['bridge_if']
+    cif    = module.params['container']['container_if']
+    image  = module.params['image']
+    mask   = module.params['network']['nw_mask']
+
     bridge = get_bridge()
 
-    id = command(CMD01 % {"name": module.params['name'], "image": module.params['image']}).rstrip()
+    id = command(CMD01 % {"name": name, "image": image}).rstrip()
     pid = command(CMD02 % {"id": id}).rstrip()
 
     if not os.path.exists("/var/run/netns"):
       os.mkdir("/var/run/netns")
 
     command(CMD03 % {"pid": pid})
-    command(CMD04 % {"bif": module.params['bif'], "cif": module.params['cif']})
-    command(CMD05 % {"bif": module.params['bif']})
-    command(CMD06 % {"bridge": bridge, "bif": module.params['bif']})
-    command(CMD07 % {"cif": module.params['cif'], "pid": pid})
-    command(CMD08 % {"pid": pid, "cif": module.params['cif'], "mac": module.params['mac']})
-    command(CMD09 % {"pid": pid, "ip_addr": module.params['ip_addr'], "nw_mask": module.params['nw_mask'], "cif": module.params['cif']})
-    command(CMD10 % {"pid": pid, "cif": module.params['cif']})
+    command(CMD04 % {"bif": bif, "cif": cif})
+    command(CMD05 % {"bif": bif})
+    command(CMD06 % {"bridge": bridge, "bif": bif})
+    command(CMD07 % {"cif": cif, "pid": pid})
+    command(CMD08 % {"pid": pid, "cif": cif, "mac": mac})
+    command(CMD09 % {"pid": pid, "ip_addr": ipaddr, "nw_mask": mask, "cif": cif})
+    command(CMD10 % {"pid": pid, "cif": cif})
 
     with open(module.params['cfile'],'a') as cfile:
-      cfile.write('%s,%s,%s,%s\n' % (id, pid, module.params['bif'], module.params['cif']))
-    
+      cfile.write('%s,%s,%s,%s\n' % (id, pid, bif, cif))
+
     module.exit_json(changed=True, rc=0)
 
   except Exception, err:
@@ -54,14 +62,10 @@ def main():
 
 module = AnsibleModule(
   argument_spec=dict(
-    name=dict(default=None, required=True),
     image=dict(default=None, required=True),
-    bif=dict(default=None, require=True),
-    cif=dict(default=None, require=True),
-    ip_addr=dict(default=None, require=True),
-    mac=dict(default=None, require=True),
-    nw_mask=dict(default=None, require=True),
     cfile=dict(default=None, required=True),
+    network=dict(type='dict', default=None, required=True),
+    container=dict(type='dict', default=None, required=True),
   ),
 )
 

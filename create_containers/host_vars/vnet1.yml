@@ -1,9 +1,6 @@
-name: "vnet1"
-virtual:
-  name: "internal"
-  nw_addr: "192.168.99.0"
-  nw_mask: 24
-containers:
+node:
+  name: "vnet1"
+  containers:
   - name:           "container11"
     ip_addr:        "192.168.99.11"
     mac_addr:       "10:00:00:00:03:11"

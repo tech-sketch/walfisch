@@ -1,0 +1,89 @@
+#!/usr/bin/python
+
+import re
+from ansible.module_utils.basic import *
+
+def command(cmd):
+  (rc, out, err) = module.run_command(cmd)
+  if rc != 0:
+    raise Exception, err
+  return out
+
+class NwInfo:
+  def __init__(self):
+    self.bridge   = re.search(r'.*Bridge "(\w+)".*',
+                              command('ovs-vsctl show')).group(1)
+    self.dpid     = re.search(r'.*dpid:(\w+).*',
+                              command('ovs-ofctl show %s' % self.bridge)).group(1)
+    res = re.search(r'.*link/ether ([\w:]+) .*inet ([\d.]+)/([\d.]+).*',
+                              command('ip addr show %s' % self.bridge), re.DOTALL)
+    self.pnw_mac  = res.group(1)
+    self.pnw_ip   = res.group(2)
+    self.pnw_mask = res.group(3)
+    self.pnw_nw   = re.search(r'^([\d.]+)/\d.+ .* src %s.*' % self.pnw_ip,
+                              command('ip route'), re.DOTALL).group(1)
+    self.pnw_if   = re.search(r'.*Port "([eth|enp].+)"\n .*',
+                              command('ovs-vsctl show'), re.MULTILINE).group(1)
+
+def get_manager_url():
+  out = command('grep webapi_uri /etc/openvnet/vnctl.conf')
+  ip = re.search(r"^webapi_uri.*'(.*)'$", out).group(1)
+  out = command('grep webapi_port /etc/openvnet/vnctl.conf')
+  port = re.search(r"^webapi_port.*'(.*)'$", out).group(1)
+  return 'http://%s:%s' % (ip, port)
+
+def register_data(path, params):
+  cmd = 'curl -X POST '
+  for param in params:
+    cmd += '--data-urlencode %s ' % param
+  cmd += '%(manager_url)s%(path)s' % {'manager_url':get_manager_url(), 'path':path}
+  return command(cmd)
+
+def set_datapath():
+  name = module.params['node']['name']
+
+  path = '/api/datapaths'
+  params = [
+            'uuid=dp-%s'      % name, 
+            'display_name=%s' % name,
+            'dpid=0x%s'       % NwInfo().dpid,
+            'node_id=%s'      % name 
+           ]
+  return register_data(path, params)
+
+def set_public_network():
+  name = module.params['public_nw']['name']
+
+  path = '/api/networks'
+  params = [
+           'uuid=nw-%s'      % name,
+           'display_name=%s' % name,
+           'ipv4_network=%s' % get_pnw_addr(),
+           'ipv4_prefix=%s' % get_pnw_ip_mask[1],
+           'network_mode=physical'
+           ]
+  return register_data(path, params)
+
+def main():
+  try:
+#    set_datapath()
+#    res = set_public_network()
+    res = '%s\n' % NwInfo().pnw_if
+
+    with open('/root/log','a') as log:
+      log.write('%s\n' % res)
+
+    module.exit_json(changed=True, rc=0)
+
+  except Exception, err:
+    module.fail_json(msg='%s' % err.message)
+
+module = AnsibleModule(
+  argument_spec=dict(
+    node=dict(type='dict', default=None, require=True),
+    public_nw=dict(type='dict', default=None, require=False),
+    virtual_nw=dict(type='dict', default=None, require=False),
+  ),
+)
+
+main()

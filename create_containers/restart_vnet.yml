@@ -3,6 +3,7 @@
   vars_files:
     - group_vars/consts.yml
   roles:
+    - vnet/reset_db
     - vnet/restart_vnmgr
     - vnet/restart_webapi
 

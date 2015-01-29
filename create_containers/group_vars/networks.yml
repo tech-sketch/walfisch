@@ -1,0 +1,7 @@
+networks:
+  public:
+    - name:    "public1"
+  virtual:
+    - name:    "internal"
+      nw_addr: "192.168.99.0"
+      nw_mask: 24

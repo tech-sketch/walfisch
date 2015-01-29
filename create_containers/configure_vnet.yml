@@ -1,0 +1,9 @@
+- hosts: vnet1
+  sudo: yes
+  vars_files:
+    - group_vars/consts.yml
+    - group_vars/networks.yml
+    - host_vars/vnet1.yml
+  roles:
+    - vnet/reset_db
+    - vnet/configure_vnet

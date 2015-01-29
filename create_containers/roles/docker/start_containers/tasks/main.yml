@@ -2,15 +2,11 @@
   service: name="docker" state="started"
 
 - name: remove containers file
-  file: path="{{ containers_file }}" state=absent
+  file: path="{{ consts.containers_file }}" state=absent
 
 - name: start containers
-  start_container: name={{ item.name }}
-                   image={{ container_image }}
-                   bif={{ item.bridge_if }}
-                   cif={{ item.container_if }}
-                   ip_addr={{ item.ip_addr }}
-                   mac={{ item.mac_addr }}
-                   nw_mask={{ virtual.nw_mask }}
-                   cfile={{ containers_file }}
-  with_items: containers
+  start_container: image="{{ consts.container_image }}"
+                   cfile="{{ consts.containers_file }}"
+                   network="{{ networks.virtual[0] }}"
+                   container="{{ item }}"
+  with_items: node.containers
