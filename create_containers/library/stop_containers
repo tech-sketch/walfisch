@@ -3,41 +3,56 @@
 import re
 from ansible.module_utils.basic import *
 
-CMD01 = 'docker kill %(id)s'
-CMD02 = 'docker rm %(id)s'
-CMD03 = 'ovs-vsctl del-port %(bridge)s %(bif)s'
-CMD04 = 'rm -rf /var/run/netns/%(pid)s'
-
-def command(cmd):
-  (rc, out, err) = module.run_command(cmd)
-  if rc != 0:
-    raise Exception, err
-  return out
-
-def get_bridge():
-  out = command("ovs-vsctl show")
-  return re.search(r'.*Bridge "(\w+)".*', out).group(1)
-
-def main():
-  try:
-    bridge = get_bridge()
-
-    for line in open(module.params['cfile']):
-      params = line.split(',')
-      command(CMD01 % {"id": params[0]})
-      command(CMD02 % {"id": params[0]})
-      command(CMD03 % {"bridge": bridge, "bif":params[2]})
-      command(CMD04 % {"pid": params[1]})
-    
-    module.exit_json(changed=True, rc=0)
-
-  except Exception, err:
-    module.fail_json(msg='%s' % err.message)
+DEBUG = False
 
 module = AnsibleModule(
   argument_spec=dict(
     cfile=dict(default=None, required=True),
   ),
 )
+executed_cmds = []
+
+CMD01 = 'docker kill %(id)s'
+CMD02 = 'docker rm %(id)s'
+CMD03 = 'ovs-vsctl del-port %(bridge)s %(bif)s'
+CMD04 = 'rm -rf /var/run/netns/%(pid)s'
+
+class Cmd:
+  def __init__(self):
+    pass
+
+  def execute(self, cmd, log=False):
+    (rc, out, err) = module.run_command(cmd)
+    if rc != 0:
+      raise Exception, err
+    if log:
+      executed_cmds.append(cmd)
+    if log and DEBUG:
+      executed_cmds.append('result:%s' % out)
+    return out
+
+class NWInfo:
+  def __init__(self):
+    self.bridge = re.search(r'.*Bridge "(\w+)".*',
+                            Cmd().execute('ovs-vsctl show')).group(1)
+
+def main():
+  try:
+    cmd = Cmd()
+    pnw = NWInfo()
+
+    bridge = pnw.bridge
+
+    for line in open(module.params['cfile']):
+      params = line.split(',')
+      cmd.execute(CMD01 % {"id": params[0]}, log=True)
+      cmd.execute(CMD02 % {"id": params[0]}, log=True)
+      cmd.execute(CMD03 % {"bridge": bridge, "bif":params[2]}, log=True)
+      cmd.execute(CMD04 % {"pid": params[1]}, log=True)
+    
+    module.exit_json(changed=True, rc=0, executed=executed_cmds)
+
+  except Exception, err:
+    module.fail_json(msg='%s' % err.message)
 
 main()

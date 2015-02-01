@@ -5,8 +5,11 @@
   file: path="{{ consts.containers_file }}" state=absent
 
 - name: start containers
-  start_container: image="{{ consts.container_image }}"
-                   cfile="{{ consts.containers_file }}"
-                   network="{{ networks.virtual[0] }}"
-                   container="{{ item }}"
-  with_items: node.containers
+  start_containers: image="{{ consts.container_image }}"
+                    cfile="{{ consts.containers_file }}"
+                    network="{{ networks.virtual[0] }}"
+                    node="{{ node }}"
+  register: result
+
+- name: executed cmd
+  debug: var=result.executed
