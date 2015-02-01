@@ -1,2 +1,2 @@
-- name: start vnet-webapi
+- name: restart vnet-webapi
   service: name="vnet-webapi" state=restarted
