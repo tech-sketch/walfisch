@@ -1,4 +1,0 @@
-- name: configure vnet
-  configure_vnet: node="{{ node }}"
-                  public_nw="{{ networks.public[0] }}"
-                  virtual_nw="{{ networks.virtual[0] }}"

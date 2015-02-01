@@ -1,7 +1,22 @@
 networks:
-  public:
-    - name:    "public1"
+  physical:
+    - name:    "physical01"
+    - name:    "physical02"
   virtual:
-    - name:    "internal"
+    - name:    "virtual"
       nw_addr: "192.168.99.0"
       nw_mask: 24
+
+nfv:
+  security_groups:
+    - name:    "sg-1"
+      rules:
+        - "icmp:-1:0.0.0.0/0"
+        - "tcp:22:10.0.0.0/8"
+    - name:    "sg-2"
+      rules:
+        - "icmp:-1:0.0.0.0/0"
+        - "tcp:22:sg-1"
+    - name:    "sg-3"
+      rules:
+        - "icmp:-1:0.0.0.0/0"

@@ -6,4 +6,48 @@
     - host_vars/vnet1.yml
   roles:
     - vnet/reset_db
-    - vnet/configure_vnet
+  tasks:
+    - name: configure vnet
+      configure_vnet: node="{{ node }}"
+                      physical="{{ networks.physical[0] }}"
+                      virtual="{{ networks.virtual[0] }}"
+                      nfv="{{ nfv }}"
+                      register_physical_nw=True
+                      register_virtual_nw=True
+                      register_security_group=True
+      register: result
+    - name: executed cmd
+      debug: var=result.executed
+
+- hosts: vnet2
+  sudo: yes
+  vars_files:
+    - group_vars/consts.yml
+    - group_vars/networks.yml
+    - host_vars/vnet2.yml
+  tasks:
+    - name: configure vnet
+      configure_vnet: node="{{ node }}"
+                      physical="{{ networks.physical[0] }}"
+                      virtual="{{ networks.virtual[0] }}"
+                      nfv="{{ nfv }}"
+      register: result
+    - name: executed cmd
+      debug: var=result.executed
+
+- hosts: vnet3
+  sudo: yes
+  vars_files:
+    - group_vars/consts.yml
+    - group_vars/networks.yml
+    - host_vars/vnet3.yml
+  tasks:
+    - name: configure vnet
+      configure_vnet: node="{{ node }}"
+                      physical="{{ networks.physical[1] }}"
+                      virtual="{{ networks.virtual[0] }}"
+                      nfv="{{ nfv }}"
+                      register_physical_nw=True
+      register: result
+    - name: executed cmd
+      debug: var=result.executed
