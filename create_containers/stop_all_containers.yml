@@ -1,0 +1,6 @@
+- hosts: all
+  sudo: yes
+  vars_files:
+    - group_vars/consts.yml
+  roles:
+    - docker/stop_all_containers
