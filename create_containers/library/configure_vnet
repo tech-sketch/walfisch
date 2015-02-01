@@ -3,7 +3,7 @@
 import re
 from ansible.module_utils.basic import *
 
-DEBUG = False
+DEBUG = True
 
 module = AnsibleModule(
   argument_spec=dict(
@@ -14,6 +14,7 @@ module = AnsibleModule(
     register_physical_nw=dict(type='bool', default=False, require=False),
     register_virtual_nw=dict(type='bool', default=False, require=False),
     register_security_group=dict(type='bool', default=False, require=False),
+    register_route_link=dict(type='bool', default=False, require=False),
   ),
 )
 executed_cmds = []
@@ -60,7 +61,7 @@ class NWInfo:
                        [re.match(r'^([\d.]+)/\d.+ .* src %s.*' % self.pnw_ip, line)
                          for line in cmd.execute('ip route').split('\n')]
                        if x != None][0].group(1)
-    self.pnw_if   = re.search(r'.*Port "([eth|enp].+)"\n .*',
+    self.pnw_if   = re.search(r'.*Port "(eth[\w]+|enp[\w]+)".*',
                               cmd.execute('ovs-vsctl show'), re.MULTILINE).group(1)
 
 class VNetConfigure:
@@ -191,6 +192,78 @@ class VNetConfigure:
 
     return self.set_broadcast_mac(nw, mac)
 
+  def set_route_link(self):
+    name = module.params['nfv']['route_link']['name']
+    mac  = module.params['nfv']['route_link']['mac']
+
+    path = '/api/route_links'
+    params = [
+             'uuid=rl-%s'     % name,
+             'mac_address=%s' % mac,
+             ]
+
+    return self.cmd.register_data(path, params)
+
+  def set_vrouter(self, name, ip, mac, nw):
+    rlname = module.params['nfv']['route_link']['name']
+    results = []
+
+    path = '/api/interfaces'
+    params = [
+             'uuid=if-rt%s'       % name,
+             'network_uuid=nw-%s' % name,
+             'mac_address=%s'     % mac,
+             'ipv4_address=%s'    % ip,
+             'mode=simulated',
+             'enable_routing=true',
+             ]
+    results.append(self.cmd.register_data(path, params))
+
+    path = '/api/network_services'
+    params = [
+             'display_name=%s'        % name,
+             'interface_uuid=if-rt%s' % name,
+             'type=router',
+             ]
+    results.append(self.cmd.register_data(path, params))
+
+    path = '/api/routes'
+    params = [
+             'interface_uuid=if-rt%s' % name,
+             'route_link_uuid=rl-%s'  % rlname,
+             'network_uuid=nw-%s'     % name,
+             'ipv4_network=%s'        % nw,
+             ]
+    results.append(self.cmd.register_data(path, params))
+
+    return results
+
+  def set_vrouter_physical(self):
+    name = module.params['physical']['name']
+    ip   = module.params['physical']['vrouter']['ip_addr']
+    mac  = module.params['physical']['vrouter']['mac']
+    nw   = self.nw.pnw_nw
+    return self.set_vrouter(name, ip, mac, nw)
+
+  def set_vrouter_virtual(self):
+    name = module.params['virtual']['name']
+    ip   = module.params['virtual']['vrouter']['ip_addr']
+    mac  = module.params['virtual']['vrouter']['mac']
+    nw   = module.params['virtual']['nw_addr']
+    return self.set_vrouter(name, ip, mac, nw)
+
+  def set_route_link_broadcast_mac(self):
+    node   = module.params['node']['name']
+    rlname = module.params['nfv']['route_link']['name']
+    mac    = module.params['node']['broadcast_mac']['dp_rl']
+
+    path = '/api/datapaths/dp-%s/route_links/rl-%s' % (node, rlname)
+    params = [
+             'interface_uuid=if-%s%s' % (node, self.nw.pnw_if),
+             'mac_address=%s'       % mac,
+             ]
+    return self.cmd.register_data(path, params)
+
 def main():
   try:
     vnet = VNetConfigure()
@@ -205,7 +278,14 @@ def main():
     vnet.set_virtual_if()
     vnet.set_physical_broadcast_mac()
     vnet.set_virtual_broadcast_mac()
-
+    if module.params['register_route_link']:
+      vnet.set_route_link()
+    if module.params['register_physical_nw']:
+      vnet.set_vrouter_physical()
+    if module.params['register_virtual_nw']:
+      vnet.set_vrouter_virtual()
+    vnet.set_route_link_broadcast_mac()
+    
     module.exit_json(changed=True, rc=0, executed=executed_cmds)
 
   except Exception, err:

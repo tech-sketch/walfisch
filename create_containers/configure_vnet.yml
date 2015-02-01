@@ -15,6 +15,7 @@
                       register_physical_nw=True
                       register_virtual_nw=True
                       register_security_group=True
+                      register_route_link=True
       register: result
     - name: executed cmd
       debug: var=result.executed

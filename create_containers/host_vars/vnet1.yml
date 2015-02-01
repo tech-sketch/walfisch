@@ -3,8 +3,7 @@ node:
   broadcast_mac:
     physical:       "10:00:00:01:01:01"
     virtual:        "10:00:00:01:02:01"
-    route_link:     "10:00:00:01:03:01"
-    dp_rl:          "10:00:00:01:04:01"
+    dp_rl:          "10:00:00:01:03:01"
   containers:
   - name:           "container11"
     ip_addr:        "192.168.99.11"

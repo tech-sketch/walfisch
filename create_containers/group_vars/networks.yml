@@ -1,13 +1,25 @@
 networks:
   physical:
     - name:    "physical01"
+      vrouter:
+        ip_addr: "10.120.121.62"
+        mac:     "10:00:00:00:01:01"
     - name:    "physical02"
+      vrouter:
+        ip_addr: "10.90.87.126"
+        mac:     "10:00:00:00:01:02"
   virtual:
     - name:    "virtual"
       nw_addr: "192.168.99.0"
       nw_mask: 24
+      vrouter:
+        ip_addr: "192.168.99.1"
+        mac:     "10:00:00:00:01:03"
 
 nfv:
+  route_link:
+    name:     "rl"
+    mac:      "10:00:00:00:02:01"
   security_groups:
     - name:    "sg-1"
       rules:
