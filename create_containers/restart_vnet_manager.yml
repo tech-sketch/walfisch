@@ -3,13 +3,5 @@
   vars_files:
     - vars/consts.yml
   roles:
-    - vnet/reset_db
     - vnet/restart_vnmgr
     - vnet/restart_webapi
-
-- hosts: all
-  sudo: yes
-  vars_files:
-    - vars/consts.yml
-  roles:
-    - vnet/restart_vna

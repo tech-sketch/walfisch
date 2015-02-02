@@ -1,0 +1,35 @@
+- hosts: vnet1
+  sudo: yes
+  vars_files:
+    - vars/consts.yml
+    - vars/networks.yml
+  tasks:
+    - name: remove_static_routes
+      remove_static_routes: virtual="{{ networks.virtual[0] }}"
+      register: result
+    - name: executed cmd
+      debug: var=result.executed
+
+- hosts: vnet2
+  sudo: yes
+  vars_files:
+    - vars/consts.yml
+    - vars/networks.yml
+  tasks:
+    - name: remove_static_routes
+      remove_static_routes: virtual="{{ networks.virtual[0] }}"
+      register: result
+    - name: executed cmd
+      debug: var=result.executed
+
+- hosts: vnet3
+  sudo: yes
+  vars_files:
+    - vars/consts.yml
+    - vars/networks.yml
+  tasks:
+    - name: remove_static_routes
+      remove_static_routes: virtual="{{ networks.virtual[0] }}"
+      register: result
+    - name: executed cmd
+      debug: var=result.executed

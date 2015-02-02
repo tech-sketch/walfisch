@@ -4,8 +4,6 @@
     - vars/consts.yml
     - vars/networks.yml
     - vars/vnet1.yml
-  roles:
-    - vnet/reset_db
   tasks:
     - name: configure vnet
       configure_vnet: node="{{ node }}"
@@ -19,6 +17,8 @@
       register: result
     - name: executed cmd
       debug: var=result.executed
+    - name: sleep 5sec
+      shell: sleep 5
 
 - hosts: vnet2
   sudo: yes
@@ -35,6 +35,8 @@
       register: result
     - name: executed cmd
       debug: var=result.executed
+    - name: sleep 5sec
+      shell: sleep 5
 
 - hosts: vnet3
   sudo: yes
@@ -52,3 +54,5 @@
       register: result
     - name: executed cmd
       debug: var=result.executed
+    - name: sleep 5sec
+      shell: sleep 5

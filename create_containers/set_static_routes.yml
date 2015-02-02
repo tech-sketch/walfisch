@@ -1,0 +1,41 @@
+- hosts: vnet1
+  sudo: yes
+  vars_files:
+    - vars/consts.yml
+    - vars/networks.yml
+  tasks:
+    - name: set_static_routes
+      set_static_routes: physical="{{ networks.physical[0] }}"
+                         virtual="{{ networks.virtual[0] }}"
+                         cfile="{{ consts.containers_file }}"
+      register: result
+    - name: executed cmd
+      debug: var=result.executed
+
+- hosts: vnet2
+  sudo: yes
+  vars_files:
+    - vars/consts.yml
+    - vars/networks.yml
+  tasks:
+    - name: set_static_routes
+      set_static_routes: physical="{{ networks.physical[0] }}"
+                         virtual="{{ networks.virtual[0] }}"
+                         cfile="{{ consts.containers_file }}"
+      register: result
+    - name: executed cmd
+      debug: var=result.executed
+
+- hosts: vnet3
+  sudo: yes
+  vars_files:
+    - vars/consts.yml
+    - vars/networks.yml
+  tasks:
+    - name: set_static_routes
+      set_static_routes: physical="{{ networks.physical[1] }}"
+                         virtual="{{ networks.virtual[0] }}"
+                         cfile="{{ consts.containers_file }}"
+      register: result
+    - name: executed cmd
+      debug: var=result.executed

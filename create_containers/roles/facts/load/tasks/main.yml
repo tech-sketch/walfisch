@@ -1,2 +1,0 @@
-- name: load local facts
-  setup: fact_path="{{ fact_path }}"

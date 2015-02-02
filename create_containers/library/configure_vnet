@@ -3,7 +3,7 @@
 import re
 from ansible.module_utils.basic import *
 
-DEBUG = True
+DEBUG = False
 
 module = AnsibleModule(
   argument_spec=dict(

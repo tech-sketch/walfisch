@@ -1,5 +1,4 @@
 consts:
-  fact_path: /root/.facts
   docker_path: /root/docker
   containers_file: /root/.containers_file
   container_image: centos_sshd
