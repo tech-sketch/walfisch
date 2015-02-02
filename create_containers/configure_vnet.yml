@@ -1,9 +1,9 @@
 - hosts: vnet1
   sudo: yes
   vars_files:
-    - group_vars/consts.yml
-    - group_vars/networks.yml
-    - host_vars/vnet1.yml
+    - vars/consts.yml
+    - vars/networks.yml
+    - vars/vnet1.yml
   roles:
     - vnet/reset_db
   tasks:
@@ -23,9 +23,9 @@
 - hosts: vnet2
   sudo: yes
   vars_files:
-    - group_vars/consts.yml
-    - group_vars/networks.yml
-    - host_vars/vnet2.yml
+    - vars/consts.yml
+    - vars/networks.yml
+    - vars/vnet2.yml
   tasks:
     - name: configure vnet
       configure_vnet: node="{{ node }}"
@@ -39,9 +39,9 @@
 - hosts: vnet3
   sudo: yes
   vars_files:
-    - group_vars/consts.yml
-    - group_vars/networks.yml
-    - host_vars/vnet3.yml
+    - vars/consts.yml
+    - vars/networks.yml
+    - vars/vnet3.yml
   tasks:
     - name: configure vnet
       configure_vnet: node="{{ node }}"
