@@ -1,0 +1,14 @@
+- hosts: all
+  sudo: yes
+  vars_files:
+    - vars/consts.yml
+  roles:
+    - vnet/stop_vna
+
+- hosts: manager
+  sudo: yes
+  vars_files:
+    - vars/consts.yml
+  roles:
+    - vnet/stop_webapi
+    - vnet/stop_vnmgr

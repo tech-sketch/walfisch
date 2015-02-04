@@ -1,3 +1,4 @@
 - include: stop_containers.yml
 - include: remove_static_routes.yml
+- include: stop_vnet.yml
 - include: reset_db.yml

@@ -2,11 +2,11 @@ networks:
   physical:
     - name:    "physical01"
       vrouter:
-        ip_addr: "10.120.121.62"
+        ip_addr: "10.132.99.254"
         mac:     "10:00:00:00:01:01"
     - name:    "physical02"
       vrouter:
-        ip_addr: "10.88.186.190"
+        ip_addr: "10.122.167.254"
         mac:     "10:00:00:00:01:02"
   virtual:
     - name:    "virtual"
