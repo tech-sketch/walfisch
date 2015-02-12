@@ -39,3 +39,9 @@
       register: result
     - name: executed cmd
       debug: var=result.executed
+
+- hosts: all
+  sudo: yes
+  tasks:
+    - name: sleep 5sec
+      shell: sleep 5
