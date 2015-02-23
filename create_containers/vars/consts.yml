@@ -1,0 +1,6 @@
+consts:
+  docker_path: /root/docker
+  containers_file: /root/.containers_file
+  container_image: centos_sshd
+  vnet_path: /opt/axsh/openvnet/vnet
+  ruby_bin: /opt/axsh/openvnet/ruby/bin

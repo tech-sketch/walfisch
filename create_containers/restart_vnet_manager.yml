@@ -1,0 +1,7 @@
+- hosts: manager
+  sudo: yes
+  vars_files:
+    - vars/consts.yml
+  roles:
+    - vnet/restart_vnmgr
+    - vnet/restart_webapi

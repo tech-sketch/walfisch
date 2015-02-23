@@ -1,0 +1,2 @@
+- name: stop vnet-webapi
+  service: name="vnet-webapi" state=stopped

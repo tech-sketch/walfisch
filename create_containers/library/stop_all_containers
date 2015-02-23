@@ -1,0 +1,64 @@
+#!/usr/bin/python
+
+import re
+from ansible.module_utils.basic import *
+
+DEBUG = False
+
+module = AnsibleModule(
+  argument_spec=dict(
+  ),
+)
+executed_cmds = []
+
+CMD01 = 'docker ps -a -q'
+CMD02 = 'docker kill %s'
+CMD03 = 'docker rm %s'
+CMD04 = 'ovs-vsctl show'
+CMD05 = 'ovs-vsctl del-port %s %s'
+CMD06 = 'rm -rf /var/run/netns/*'
+
+class Cmd:
+  def __init__(self):
+    pass
+
+  def execute(self, cmd, log=False):
+    (rc, out, err) = module.run_command(cmd)
+    if rc != 0:
+      raise Exception, err
+    if log:
+      executed_cmds.append(cmd)
+    if log and DEBUG:
+      executed_cmds.append('result:%s' % out)
+    return out
+
+class NWInfo:
+  def __init__(self):
+    self.bridge = re.search(r'.*Bridge "(\w+)".*',
+                            Cmd().execute('ovs-vsctl show')).group(1)
+
+def main():
+  try:
+    cmd = Cmd()
+    pnw = NWInfo()
+
+    bridge = pnw.bridge
+
+    for id in  cmd.execute(CMD01, log=True).split('\n'):
+      if id != "":
+        cmd.execute(CMD02 % id, log=True)
+        cmd.execute(CMD03 % id, log=True)
+
+    for line in cmd.execute(CMD04, log=True).split('\n'):
+      r = re.match(r'.*Interface "(veth[\w]+)".*', line)
+      if r != None:
+        cmd.execute(CMD05 % (bridge, r.group(1)), log=True)
+
+    cmd.execute(CMD06, log=True) 
+    
+    module.exit_json(changed=True, rc=0, executed=executed_cmds)
+
+  except Exception, err:
+    module.fail_json(msg='%s' % err.message)
+
+main()

@@ -1,0 +1,9 @@
+- name: reset vnet db
+  shell: bundle exec {{ item }}
+         chdir={{ consts.vnet_path }}
+  with_items:
+    - rake db:drop
+    - rake db:create
+    - rake db:init
+  environment:
+    PATH: "{{ ansible_env.PATH }}:{{ consts.ruby_bin }}"

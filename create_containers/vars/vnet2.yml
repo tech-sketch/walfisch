@@ -1,0 +1,28 @@
+node:
+  name: "vnet2"
+  broadcast_mac:
+    physical:       "10:00:00:02:01:01"
+    virtual:        "10:00:00:02:02:01"
+    dp_rl:          "10:00:00:02:04:03"
+  containers:
+    - name:           "container21"
+      ip_addr:        "192.168.99.21"
+      mac_addr:       "10:00:00:02:05:21"
+      bridge_if:      "veth21b"
+      container_if:   "veth21c"
+      security_groups:
+        - "sg-1"
+    - name:           "container22"
+      ip_addr:        "192.168.99.22"
+      mac_addr:       "10:00:00:02:05:22"
+      bridge_if:      "veth22b"
+      container_if:   "veth22c"
+      security_groups:
+        - "sg-2"
+    - name:           "container23"
+      ip_addr:        "192.168.99.23"
+      mac_addr:       "10:00:00:02:05:23"
+      bridge_if:      "veth23b"
+      container_if:   "veth23c"
+      security_groups:
+        - "sg-3"

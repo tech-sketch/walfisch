@@ -1,0 +1,6 @@
+- name: stop_all containers
+  stop_all_containers:
+  register: result
+
+- name: executed cmd
+  debug: var=result.executed

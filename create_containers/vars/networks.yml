@@ -1,0 +1,34 @@
+networks:
+  physical:
+    - name:    "physical01"
+      vrouter:
+        ip_addr: "10.132.99.254"
+        mac:     "10:00:00:00:01:01"
+    - name:    "physical02"
+      vrouter:
+        ip_addr: "10.122.167.254"
+        mac:     "10:00:00:00:01:02"
+  virtual:
+    - name:    "virtual"
+      nw_addr: "192.168.99.0"
+      nw_mask: 24
+      vrouter:
+        ip_addr: "192.168.99.1"
+        mac:     "10:00:00:00:01:03"
+
+nfv:
+  route_link:
+    name:     "rl"
+    mac:      "10:00:00:00:02:01"
+  security_groups:
+    - name:    "sg-1"
+      rules:
+        - "icmp:-1:0.0.0.0/0"
+        - "tcp:22:10.0.0.0/8"
+    - name:    "sg-2"
+      rules:
+        - "icmp:-1:0.0.0.0/0"
+        - "tcp:22:sg-1"
+    - name:    "sg-3"
+      rules:
+        - "icmp:-1:0.0.0.0/0"

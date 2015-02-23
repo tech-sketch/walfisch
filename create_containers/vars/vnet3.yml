@@ -1,0 +1,28 @@
+node:
+  name: "vnet3"
+  broadcast_mac:
+    physical:       "10:00:00:03:01:01"
+    virtual:        "10:00:00:03:02:01"
+    dp_rl:          "10:00:00:03:03:01"
+  containers:
+    - name:           "container31"
+      ip_addr:        "192.168.99.31"
+      mac_addr:       "10:00:00:03:05:31"
+      bridge_if:      "veth31b"
+      container_if:   "veth31c"
+      security_groups:
+        - "sg-1"
+    - name:           "container32"
+      ip_addr:        "192.168.99.32"
+      mac_addr:       "10:00:00:03:05:32"
+      bridge_if:      "veth32b"
+      container_if:   "veth32c"
+      security_groups:
+        - "sg-2"
+    - name:           "container33"
+      ip_addr:        "192.168.99.33"
+      mac_addr:       "10:00:00:03:05:33"
+      bridge_if:      "veth33b"
+      container_if:   "veth33c"
+      security_groups:
+        - "sg-3"

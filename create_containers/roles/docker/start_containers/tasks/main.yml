@@ -1,0 +1,15 @@
+- name: start docker service
+  service: name="docker" state="started"
+
+- name: remove containers file
+  file: path="{{ consts.containers_file }}" state=absent
+
+- name: start containers
+  start_containers: image="{{ consts.container_image }}"
+                    cfile="{{ consts.containers_file }}"
+                    network="{{ networks.virtual[0] }}"
+                    node="{{ node }}"
+  register: result
+
+- name: executed cmd
+  debug: var=result.executed

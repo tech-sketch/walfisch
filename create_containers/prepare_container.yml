@@ -1,0 +1,6 @@
+- hosts: all
+  sudo: yes
+  vars_files:
+    - vars/consts.yml
+  roles:
+    - docker/create_image

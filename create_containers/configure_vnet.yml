@@ -1,0 +1,58 @@
+- hosts: vnet1
+  sudo: yes
+  vars_files:
+    - vars/consts.yml
+    - vars/networks.yml
+    - vars/vnet1.yml
+  tasks:
+    - name: configure vnet
+      configure_vnet: node="{{ node }}"
+                      physical="{{ networks.physical[0] }}"
+                      virtual="{{ networks.virtual[0] }}"
+                      nfv="{{ nfv }}"
+                      register_physical_nw=True
+                      register_virtual_nw=True
+                      register_security_group=True
+                      register_route_link=True
+      register: result
+    - name: executed cmd
+      debug: var=result.executed
+    - name: sleep 5sec
+      shell: sleep 5
+
+- hosts: vnet2
+  sudo: yes
+  vars_files:
+    - vars/consts.yml
+    - vars/networks.yml
+    - vars/vnet2.yml
+  tasks:
+    - name: configure vnet
+      configure_vnet: node="{{ node }}"
+                      physical="{{ networks.physical[0] }}"
+                      virtual="{{ networks.virtual[0] }}"
+                      nfv="{{ nfv }}"
+      register: result
+    - name: executed cmd
+      debug: var=result.executed
+    - name: sleep 5sec
+      shell: sleep 5
+
+- hosts: vnet3
+  sudo: yes
+  vars_files:
+    - vars/consts.yml
+    - vars/networks.yml
+    - vars/vnet3.yml
+  tasks:
+    - name: configure vnet
+      configure_vnet: node="{{ node }}"
+                      physical="{{ networks.physical[1] }}"
+                      virtual="{{ networks.virtual[0] }}"
+                      nfv="{{ nfv }}"
+                      register_physical_nw=True
+      register: result
+    - name: executed cmd
+      debug: var=result.executed
+    - name: sleep 5sec
+      shell: sleep 5

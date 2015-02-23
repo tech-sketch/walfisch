@@ -1,0 +1,294 @@
+#!/usr/bin/python
+
+import re
+from ansible.module_utils.basic import *
+
+DEBUG = False
+
+module = AnsibleModule(
+  argument_spec=dict(
+    node=dict(type='dict', default=None, require=True),
+    physical=dict(type='dict', default=None, require=False),
+    virtual=dict(type='dict', default=None, require=False),
+    nfv=dict(type='dict', default=None, require=False),
+    register_physical_nw=dict(type='bool', default=False, require=False),
+    register_virtual_nw=dict(type='bool', default=False, require=False),
+    register_security_group=dict(type='bool', default=False, require=False),
+    register_route_link=dict(type='bool', default=False, require=False),
+  ),
+)
+executed_cmds = []
+
+class Cmd:
+  def __init__(self):
+    vnctl = '/etc/openvnet/vnctl.conf'
+    ip = re.search(r"^webapi_uri.*'(.*)'$",
+                   self.execute('grep webapi_uri %s' % vnctl)).group(1)
+    port = re.search(r"^webapi_port.*'(.*)'$",
+                     self.execute('grep webapi_port %s' % vnctl)).group(1)
+    self.manager_url =  'http://%s:%s' % (ip, port)
+
+  def execute(self, cmd, log=False):
+    (rc, out, err) = module.run_command(cmd)
+    if rc != 0:
+      raise Exception, err
+    if log:
+      executed_cmds.append(cmd)
+    if log and DEBUG:
+      executed_cmds.append('result:%s' % out)
+    return out
+
+  def register_data(self, path, params):
+    cmd = 'curl -X POST '
+    for param in params:
+      cmd += '--data-urlencode %s ' % param
+    cmd += '%(url)s%(path)s' % {'url':self.manager_url, 'path':path}
+    return self.execute(cmd, log=True)
+
+class NWInfo:
+  def __init__(self):
+    cmd = Cmd()
+    self.bridge   = re.search(r'.*Bridge "(\w+)".*',
+                              cmd.execute('ovs-vsctl show')).group(1)
+    self.dpid     = re.search(r'.*dpid:(\w+).*',
+                              cmd.execute('ovs-ofctl show %s' % self.bridge)).group(1)
+    res = re.search(r'.*link/ether ([\w:]+) .*inet ([\d.]+)/([\d.]+).*',
+                              cmd.execute('ip addr show %s' % self.bridge), re.DOTALL)
+    self.pnw_mac  = res.group(1)
+    self.pnw_ip   = res.group(2)
+    self.pnw_mask = res.group(3)
+    self.pnw_nw   = [x for x in 
+                       [re.match(r'^([\d.]+)/\d.+ .* src %s.*' % self.pnw_ip, line)
+                         for line in cmd.execute('ip route').split('\n')]
+                       if x != None][0].group(1)
+    self.pnw_if   = re.search(r'.*Port "(eth[\w]+|enp[\w]+)".*',
+                              cmd.execute('ovs-vsctl show'), re.MULTILINE).group(1)
+
+class VNetConfigure:
+  def __init__(self):
+    self.cmd = Cmd()
+    self.nw = NWInfo()
+
+  def set_datapath(self):
+    name = module.params['node']['name']
+    
+    path = '/api/datapaths'
+    params = [
+              'uuid=dp-%s'      % name, 
+              'display_name=%s' % name,
+              'dpid=0x%s'       % self.nw.dpid,
+              'node_id=%s'      % name,
+             ]
+    return self.cmd.register_data(path, params)
+
+  def set_physical_network(self):
+    name = module.params['physical']['name']
+    
+    path = '/api/networks'
+    params = [
+             'uuid=nw-%s'      % name,
+             'display_name=%s' % name,
+             'ipv4_network=%s' % self.nw.pnw_nw,
+             'ipv4_prefix=%s'  % self.nw.pnw_mask,
+             'network_mode=physical',
+             ]
+    return self.cmd.register_data(path, params)
+
+  def set_virtual_network(self):
+    name = module.params['virtual']['name']
+    nw_addr = module.params['virtual']['nw_addr']
+    nw_mask = module.params['virtual']['nw_mask']
+
+    path = '/api/networks'
+    params = [
+             'uuid=nw-%s'      % name,
+             'display_name=%s' % name,
+             'ipv4_network=%s' % nw_addr,
+             'ipv4_prefix=%s'  % nw_mask,
+             'network_mode=virtual',
+             ]
+    return self.cmd.register_data(path, params)
+
+  def set_security_groups(self):
+    path = '/api/security_groups'
+    results = []
+
+    for sg in module.params['nfv']['security_groups']:
+      name = sg['name']
+      rules = ','.join(sg['rules'])
+      
+      params = [
+               'uuid=%s'         % name,
+               'display_name=%s' % name,
+               'rules=%s'        % rules,
+               ]
+      results.append(self.cmd.register_data(path, params))
+
+    return results
+
+  def set_physical_if(self):
+    node = module.params['node']['name']
+    physical = module.params['physical']['name']
+    
+    path = '/api/interfaces'
+    params = [
+             'uuid=if-%s%s'              % (node, self.nw.pnw_if),
+             'owner_datapath_uuid=dp-%s' % node,
+             'network_uuid=nw-%s'        % physical,
+             'mac_address=%s'            % self.nw.pnw_mac,
+             'ipv4_address=%s'           % self.nw.pnw_ip,
+             'port_name=%s'              % self.nw.pnw_if,
+             'mode=host',
+             ]
+    return self.cmd.register_data(path, params)
+
+  def set_virtual_if(self):
+    name = module.params['virtual']['name']
+    mask = module.params['virtual']['nw_mask']
+    results = []
+
+    for c in module.params['node']['containers']:
+      bif = c['bridge_if']
+      ip  = c['ip_addr']
+      mac = c['mac_addr']
+
+      path = '/api/interfaces'
+      params = [
+               'uuid=if-%s'         % bif,
+               'network_uuid=nw-%s' % name,
+               'mac_address=%s'     % mac,
+               'ipv4_address=%s'    % ip,
+               'port_name=%s'       % bif,
+               'ingress_filtering_enabled=true',
+               ]
+      results.append(self.cmd.register_data(path, params))
+
+      for sg in c['security_groups']:
+        path = '/api/interfaces/if-%s/security_groups/%s' % (bif, sg)
+        params = []
+        results.append(self.cmd.register_data(path, params))
+
+    return results
+
+  def set_broadcast_mac(self, nw, mac):
+    node = module.params['node']['name']
+
+    path = '/api/datapaths/dp-%s/networks/nw-%s' % (node, nw)
+    params = [
+             'interface_uuid=if-%s%s'   % (node, self.nw.pnw_if),
+             'broadcast_mac_address=%s' % mac,
+             ]
+    return self.cmd.register_data(path, params)
+
+  def set_physical_broadcast_mac(self):
+    nw  = module.params['physical']['name']
+    mac = module.params['node']['broadcast_mac']['physical']
+
+    return self.set_broadcast_mac(nw, mac)
+
+  def set_virtual_broadcast_mac(self):
+    nw  = module.params['virtual']['name']
+    mac = module.params['node']['broadcast_mac']['virtual']
+
+    return self.set_broadcast_mac(nw, mac)
+
+  def set_route_link(self):
+    name = module.params['nfv']['route_link']['name']
+    mac  = module.params['nfv']['route_link']['mac']
+
+    path = '/api/route_links'
+    params = [
+             'uuid=rl-%s'     % name,
+             'mac_address=%s' % mac,
+             ]
+
+    return self.cmd.register_data(path, params)
+
+  def set_vrouter(self, name, ip, mac, nw):
+    rlname = module.params['nfv']['route_link']['name']
+    results = []
+
+    path = '/api/interfaces'
+    params = [
+             'uuid=if-rt%s'       % name,
+             'network_uuid=nw-%s' % name,
+             'mac_address=%s'     % mac,
+             'ipv4_address=%s'    % ip,
+             'mode=simulated',
+             'enable_routing=true',
+             ]
+    results.append(self.cmd.register_data(path, params))
+
+    path = '/api/network_services'
+    params = [
+             'display_name=%s'        % name,
+             'interface_uuid=if-rt%s' % name,
+             'type=router',
+             ]
+    results.append(self.cmd.register_data(path, params))
+
+    path = '/api/routes'
+    params = [
+             'interface_uuid=if-rt%s' % name,
+             'route_link_uuid=rl-%s'  % rlname,
+             'network_uuid=nw-%s'     % name,
+             'ipv4_network=%s'        % nw,
+             ]
+    results.append(self.cmd.register_data(path, params))
+
+    return results
+
+  def set_vrouter_physical(self):
+    name = module.params['physical']['name']
+    ip   = module.params['physical']['vrouter']['ip_addr']
+    mac  = module.params['physical']['vrouter']['mac']
+    nw   = self.nw.pnw_nw
+    return self.set_vrouter(name, ip, mac, nw)
+
+  def set_vrouter_virtual(self):
+    name = module.params['virtual']['name']
+    ip   = module.params['virtual']['vrouter']['ip_addr']
+    mac  = module.params['virtual']['vrouter']['mac']
+    nw   = module.params['virtual']['nw_addr']
+    return self.set_vrouter(name, ip, mac, nw)
+
+  def set_route_link_broadcast_mac(self):
+    node   = module.params['node']['name']
+    rlname = module.params['nfv']['route_link']['name']
+    mac    = module.params['node']['broadcast_mac']['dp_rl']
+
+    path = '/api/datapaths/dp-%s/route_links/rl-%s' % (node, rlname)
+    params = [
+             'interface_uuid=if-%s%s' % (node, self.nw.pnw_if),
+             'mac_address=%s'       % mac,
+             ]
+    return self.cmd.register_data(path, params)
+
+def main():
+  try:
+    vnet = VNetConfigure()
+    vnet.set_datapath()
+    if module.params['register_physical_nw']:
+      vnet.set_physical_network()
+    if module.params['register_virtual_nw']:
+      vnet.set_virtual_network()
+    if module.params['register_security_group']:
+      vnet.set_security_groups()
+    vnet.set_physical_if()
+    vnet.set_virtual_if()
+    vnet.set_physical_broadcast_mac()
+    vnet.set_virtual_broadcast_mac()
+    if module.params['register_route_link']:
+      vnet.set_route_link()
+    if module.params['register_physical_nw']:
+      vnet.set_vrouter_physical()
+    if module.params['register_virtual_nw']:
+      vnet.set_vrouter_virtual()
+    vnet.set_route_link_broadcast_mac()
+    
+    module.exit_json(changed=True, rc=0, executed=executed_cmds)
+
+  except Exception, err:
+    module.fail_json(msg='%s' % err.message)
+
+main()

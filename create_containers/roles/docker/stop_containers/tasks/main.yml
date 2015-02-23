@@ -1,0 +1,9 @@
+- name: stop_containers
+  stop_containers: cfile="{{ consts.containers_file }}"
+  register: result
+
+- name: executed cmd
+  debug: var=result.executed
+
+- name: remove containers file
+  file: path="{{ consts.containers_file }}" state=absent

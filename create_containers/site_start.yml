@@ -1,0 +1,8 @@
+- include: prepare_container.yml
+- include: reset_db.yml
+- include: restart_vnet_manager.yml
+- include: restart_vnet_vna.yml
+- include: start_containers.yml
+- include: configure_vnet.yml
+- include: set_static_routes.yml
+- include: restart_vnet_vna.yml
