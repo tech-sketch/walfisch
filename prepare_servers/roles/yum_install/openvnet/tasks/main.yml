@@ -1,0 +1,14 @@
+- name: add openvnet repository
+  get_url: url="https://raw.githubusercontent.com/axsh/openvnet/master/openvnet.repo"
+           dest="/etc/yum.repos.d/openvnet.repo"
+
+- name: add openvnet third party repository
+  get_url: url="https://raw.githubusercontent.com/axsh/openvnet/master/openvnet-third-party.repo"
+           dest="/etc/yum.repos.d/openvnet-third-party.repo"
+
+- name: add epel from axsh
+  shell: rpm -Uvh http://dlc.wakame.axsh.jp.s3-website-us-east-1.amazonaws.com/epel-release
+         creates="/etc/yum.repos.d/epel.repo"
+
+- name: install openvnet
+  yum: name="openvnet" state=present

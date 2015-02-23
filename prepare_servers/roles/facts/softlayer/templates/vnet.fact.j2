@@ -1,0 +1,18 @@
+{
+  "manager" : {
+    "manage" : {
+      "addr" : "{{ hostvars[groups['manager'][0]]['ansible_eth1']['ipv4']['address'] }}"
+    }
+  },
+  "agent" : {
+    "ether" : "eth0",
+    "manage" : {
+      "addr" : "{{ ansible_eth1.ipv4.address }}"
+    },
+    "service" : {
+      "addr" : "{{ ansible_eth0.ipv4.address }}",
+      "mask" : "{{ ansible_eth0.ipv4.netmask }}",
+      "mac" : "{{ ansible_eth0.macaddress }}"
+    }
+  }
+}

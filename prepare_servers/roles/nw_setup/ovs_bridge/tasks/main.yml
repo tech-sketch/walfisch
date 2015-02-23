@@ -1,0 +1,30 @@
+- name: check ifcfg-br0
+  stat: path="/etc/sysconfig/network-scripts/ifcfg-br0"
+  register: ifcfg_br0
+  changed_when: false
+
+- name: create ifcfg-br0
+  template: src="ifcfg-br0.j2" dest="/etc/sysconfig/network-scripts/ifcfg-br0" 
+            owner=root group=root mode=0644
+  when: not ifcfg_br0.stat.exists
+  notify: restart network
+
+- name: remove original ifcfg-ethx
+  file: path="/etc/sysconfig/network-scripts/ifcfg-{{ ansible_local.vnet.agent.ether }}" state=absent
+  when: not ifcfg_br0.stat.exists
+
+- name: create ifcfg-ethx
+  template: src="ifcfg-ethx.j2" dest="/etc/sysconfig/network-scripts/ifcfg-{{ ansible_local.vnet.agent.ether }}" 
+            owner=root group=root mode=0644
+  when: not ifcfg_br0.stat.exists
+  notify: restart network
+
+- name: check route-ethx
+  stat: path="/etc/sysconfig/network-scripts/route-{{ ansible_local.vnet.agent.ether }}"
+  register: route_ethx
+  changed_when: false
+
+- name: rename route-ethx
+  shell: mv /etc/sysconfig/network-scripts/route-{{ ansible_local.vnet.agent.ether }} /etc/sysconfig/network-scripts/route-br0
+  when: route_ethx.stat.exists
+  notify: restart network

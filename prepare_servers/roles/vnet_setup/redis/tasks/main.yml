@@ -1,0 +1,5 @@
+- name: setup redis.conf
+  replace: dest="/etc/redis.conf" regexp="^bind 127.0.0.1" replace="bind 0.0.0.0"
+
+- name: start redis
+  service: name="redis" state=started

@@ -1,0 +1,27 @@
+- name: remove all rules
+  shell: iptables -F
+
+- name: allow loopback
+  shell: iptables -A INPUT -i lo -j ACCEPT
+
+- name: allow icmp
+  shell: iptables -A INPUT -p icmp -j ACCEPT
+
+- name: allow ssh
+  shell: iptables -A INPUT -m state --state NEW -m tcp -p tcp --dport 22 -j ACCEPT
+
+- name: allow established session
+  shell: iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+
+- name: allow backend subnet
+  shell: iptables -A INPUT -s 10.0.0.0/8 -j ACCEPT
+
+- name: allow agents ipaddr
+  shell: iptables -A INPUT -s "{{ item }}" -j ACCEPT
+  with_items: "{{ groups['all'] }}"
+
+- name: deny other packet
+  shell: iptables -A INPUT -j REJECT --reject-with icmp-host-prohibited
+
+- name: save rules
+  shell: service iptables save

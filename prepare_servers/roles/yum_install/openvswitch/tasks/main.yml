@@ -1,0 +1,7 @@
+- name: install ovs 2.3.0 from axsh
+  yum: name="http://dlc.openvnet.axsh.jp/packages/rhel/openvswitch/6.5/openvswitch-2.3.0-1.x86_64.rpm"
+       state=present
+
+- name: install kmod-ovs 2.3.0 from axsh
+  yum: name="http://dlc.openvnet.axsh.jp/packages/rhel/openvswitch/6.5/kmod-openvswitch-2.3.0-1.el6.x86_64.rpm"
+       state=present

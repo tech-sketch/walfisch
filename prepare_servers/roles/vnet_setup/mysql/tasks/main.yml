@@ -1,0 +1,8 @@
+- name: start mysql
+  service: name="mysqld" state=started
+
+- name: grant privileges
+  shell: mysql -u root -e "{{ item }}"
+  with_items:
+    - grant all privileges on vnet.* to 'root'@'%'
+    - flush privileges

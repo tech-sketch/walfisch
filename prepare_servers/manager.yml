@@ -1,0 +1,9 @@
+- hosts: manager
+  sudo: yes
+  vars_files:
+    - vars/consts.yml
+  roles:
+    - facts/load
+    - vnet_setup/mysql
+    - vnet_setup/redis
+    - vnet_setup/db

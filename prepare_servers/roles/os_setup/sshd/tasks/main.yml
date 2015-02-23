@@ -1,0 +1,26 @@
+- name: deny password authentication
+  lineinfile: dest="/etc/ssh/sshd_config"
+              regexp="^PasswordAuthentication"
+              insertafter="#PasswordAuthentication"
+              line="PasswordAuthentication no"
+
+- name: deny reverse DNS lookup
+  lineinfile: dest="/etc/ssh/sshd_config"
+              regexp="^UseDNS"
+              insertafter="#UseDNS"
+              line="UseDNS no"
+
+- name: deny GSSAPIAuthentication
+  lineinfile: dest="/etc/ssh/sshd_config"
+              regexp="^GSSAPIAuthentication"
+              insertafter="#GSSAPIAuthentication"
+              line="GSSAPIAuthentication no"
+
+- name: deny ipv6
+  lineinfile: dest="/etc/ssh/sshd_config"
+              regexp="^AddressFamily"
+              insertafter="#AddressFamily"
+              line="AddressFamily inet"
+
+- name: restart sshd
+  service: name="sshd" state="restarted"

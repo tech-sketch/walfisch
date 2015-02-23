@@ -1,0 +1,4 @@
+#- include: setup/facts_vagrant.yml
+- include: facts_softlayer.yml
+- include: common.yml
+- include: manager.yml
