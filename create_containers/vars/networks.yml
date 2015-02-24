@@ -2,11 +2,11 @@ networks:
   physical:
     - name:    "physical01"
       vrouter:
-        ip_addr: "10.PPP.PPP.PP1"
+        ip_addr: "10.PPP.PPP.PP0"
         mac:     "10:00:00:00:01:01"
     - name:    "physical02"
       vrouter:
-        ip_addr: "10.QQQ.QQQ.QQ1"
+        ip_addr: "10.QQQ.QQQ.QQ0"
         mac:     "10:00:00:00:01:02"
   virtual:
     - name:    "virtual"
