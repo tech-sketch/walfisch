@@ -29,6 +29,8 @@ This [Ansible](http://www.ansible.com) playbooks create the [Docker](https://www
 
 You have to create virtual machines(**CentOS 6.6**) on SoftLayer like below:
 
+![walfisch_img01](https://github.com/tech-sketch/walfisch/wiki/images/walfisch_img01.png)
+
 * SSH key authentication required
 * select one virtual machine as a manager node
 
@@ -68,6 +70,7 @@ XXX.XXX.XXX.XX1
 
 When you perform the above tasks, ansible prepares the servers like below:
 
+![walfisch_img02](https://github.com/tech-sketch/walfisch/wiki/images/walfisch_img02.png)
 
 ### Create containers and overlay networks
 
@@ -137,8 +140,11 @@ networks:
 
 When you perform the above tasks, ansible prepares the servers like below:
 
+![walfisch_img03](https://github.com/tech-sketch/walfisch/wiki/images/walfisch_img03.png)
 
 Logically, network configuration is like below:
+
+![walfisch_img04](https://github.com/tech-sketch/walfisch/wiki/images/walfisch_img04.png)
 
 ### Terminate containers and overlay networks
 
