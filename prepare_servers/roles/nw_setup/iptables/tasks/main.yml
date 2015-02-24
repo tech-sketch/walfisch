@@ -18,7 +18,7 @@
 
 - name: allow agents ipaddr
   shell: iptables -A INPUT -s "{{ item }}" -j ACCEPT
-  with_items: "{{ groups['all'] }}"
+  with_items: groups['all']
 
 - name: deny other packet
   shell: iptables -A INPUT -j REJECT --reject-with icmp-host-prohibited
