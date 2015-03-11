@@ -9,6 +9,6 @@
 - name: build vnctl
   shell: bundle install
          chdir=/opt/axsh/openvnet/vnctl
-  environment: 
+  environment:
     PATH: "{{ ansible_env.PATH }}:/opt/axsh/openvnet/ruby/bin"
   when: result|changed
