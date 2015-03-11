@@ -1,18 +1,18 @@
 #!/usr/bin/python
 
-import re
 import os
+import re
 from ansible.module_utils.basic import *
 
 DEBUG = False
 
 module = AnsibleModule(
-  argument_spec=dict(
-    image=dict(default=None, required=True),
-    cfile=dict(default=None, required=True),
-    network=dict(type='dict', default=None, required=True),
-    node=dict(type='dict', default=None, required=True),
-  ),
+    argument_spec=dict(
+        image=dict(default=None, required=True),
+        cfile=dict(default=None, required=True),
+        network=dict(type='dict', default=None, required=True),
+        node=dict(type='dict', default=None, required=True),
+    ),
 )
 executed_cmds = []
 
@@ -27,62 +27,70 @@ CMD08 = 'ip netns exec %(pid)s ip link set dev %(cif)s address %(mac)s'
 CMD09 = 'ip netns exec %(pid)s ip addr add %(ip_addr)s/%(nw_mask)s dev %(cif)s'
 CMD10 = 'ip netns exec %(pid)s ip link set %(cif)s up'
 
-class Cmd:
-  def __init__(self):
-    pass
 
-  def execute(self, cmd, log=False):
-    (rc, out, err) = module.run_command(cmd)
-    if rc != 0:
-      raise Exception, err
-    if log:
-      executed_cmds.append(cmd)
-    if log and DEBUG:
-      executed_cmds.append('result:%s' % out)
-    return out
+class Cmd(object):
 
-class NWInfo:
-  def __init__(self):
-    self.bridge = re.search(r'.*Bridge "(\w+)".*',
-                            Cmd().execute('ovs-vsctl show')).group(1)
+    def __init__(self):
+        pass
+
+    def execute(self, cmd, log=False):
+        (rc, out, err) = module.run_command(cmd)
+        if rc != 0:
+            raise Exception(err)
+        if log:
+            executed_cmds.append(cmd)
+        if log and DEBUG:
+            executed_cmds.append('result:%s' % out)
+        return out
+
+
+class NWInfo(object):
+
+    def __init__(self):
+        self.bridge = re.search(r'.*Bridge "(\w+)".*',
+                                Cmd().execute('ovs-vsctl show')).group(1)
+
 
 def main():
-  try:
-    cmd = Cmd()
-    pnw = NWInfo()
+    try:
+        cmd = Cmd()
+        pnw = NWInfo()
 
-    image  = module.params['image']
-    mask   = module.params['network']['nw_mask']
-    bridge = pnw.bridge
-    
-    if not os.path.exists("/var/run/netns"):
-      os.mkdir("/var/run/netns")
-    
-    with open(module.params['cfile'],'a') as cfile:
-      for c in module.params['node']['containers']:
-        name   = c['name']
-        ipaddr = c['ip_addr']
-        mac    = c['mac_addr']
-        bif    = c['bridge_if']
-        cif    =c['container_if']
+        image = module.params['image']
+        mask = module.params['network']['nw_mask']
+        bridge = pnw.bridge
 
-        id = cmd.execute(CMD01 % {"name": name, "image": image}, log=True).rstrip()
-        pid = cmd.execute(CMD02 % {"id": id}, log=True).rstrip()
-  
-        cmd.execute(CMD03 % {"pid": pid}, log=True)
-        cmd.execute(CMD04 % {"bif": bif, "cif": cif}, log=True)
-        cmd.execute(CMD05 % {"bif": bif}, log=True)
-        cmd.execute(CMD06 % {"bridge": bridge, "bif": bif}, log=True)
-        cmd.execute(CMD07 % {"cif": cif, "pid": pid}, log=True)
-        cmd.execute(CMD08 % {"pid": pid, "cif": cif, "mac": mac}, log=True)
-        cmd.execute(CMD09 % {"pid": pid, "ip_addr": ipaddr, "nw_mask": mask, "cif": cif}, log=True)
-        cmd.execute(CMD10 % {"pid": pid, "cif": cif}, log=True)
+        if not os.path.exists("/var/run/netns"):
+            os.mkdir("/var/run/netns")
 
-        cfile.write('%s,%s,%s,%s\n' % (id, pid, bif, cif))
+        with open(module.params['cfile'], 'a') as cfile:
+            for c in module.params['node']['containers']:
+                name = c['name']
+                ipaddr = c['ip_addr']
+                mac = c['mac_addr']
+                bif = c['bridge_if']
+                cif = c['container_if']
 
-    module.exit_json(changed=True, rc=0, executed=executed_cmds)
+                id = cmd.execute(
+                    CMD01 % {"name": name, "image": image}, log=True).rstrip()
+                pid = cmd.execute(CMD02 % {"id": id}, log=True).rstrip()
 
-  except Exception, err:
-    module.fail_json(msg='%s' % err.message)
+                cmd.execute(CMD03 % {"pid": pid}, log=True)
+                cmd.execute(CMD04 % {"bif": bif, "cif": cif}, log=True)
+                cmd.execute(CMD05 % {"bif": bif}, log=True)
+                cmd.execute(CMD06 % {"bridge": bridge, "bif": bif}, log=True)
+                cmd.execute(CMD07 % {"cif": cif, "pid": pid}, log=True)
+                cmd.execute(CMD08 %
+                            {"pid": pid, "cif": cif, "mac": mac}, log=True)
+                cmd.execute(
+                    CMD09 % {"pid": pid, "ip_addr": ipaddr, "nw_mask": mask, "cif": cif}, log=True)
+                cmd.execute(CMD10 % {"pid": pid, "cif": cif}, log=True)
+
+                cfile.write('%s,%s,%s,%s\n' % (id, pid, bif, cif))
+
+        module.exit_json(changed=True, rc=0, executed=executed_cmds)
+
+    except Exception as err:
+        module.fail_json(msg='%s' % err.message)
 
 main()

@@ -1,86 +1,94 @@
 #!/usr/bin/python
 
 import re
-import os
 from ansible.module_utils.basic import *
 
 DEBUG = False
 
 module = AnsibleModule(
-  argument_spec=dict(
-    physical=dict(type='dict', default=None, required=True),
-    virtual=dict(type='dict', default=None, required=True),
-    cfile=dict(type='str', default=None, required=True),
-  ),
+    argument_spec=dict(
+        physical=dict(type='dict', default=None, required=True),
+        virtual=dict(type='dict', default=None, required=True),
+        cfile=dict(type='str', default=None, required=True),
+    ),
 )
 executed_cmds = []
 
 CMD01 = 'ip route add %(dest)s via %(gw)s dev %(dev)s'
 CMD02 = 'ip netns exec %(pid)s ip route add %(dest)s via %(gw)s dev %(dev)s'
 
-class Cmd:
-  def __init__(self):
-    pass
 
-  def execute(self, cmd, log=False):
-    (rc, out, err) = module.run_command(cmd)
-    if rc != 0:
-      raise Exception, err
-    if log:
-      executed_cmds.append(cmd)
-    if log and DEBUG:
-      executed_cmds.append('result:%s' % out)
-    return out
+class Cmd(object):
 
-class NWInfo:
-  def __init__(self):
-    cmd = Cmd()
-    self.bridge = re.search(r'.*Bridge "(\w+)".*',
-                            Cmd().execute('ovs-vsctl show')).group(1)
-    res = re.search(r'.*link/ether ([\w:]+) .*inet ([\d.]+)/([\d.]+).*',
-                              cmd.execute('ip addr show %s' % self.bridge), re.DOTALL)
-    self.pnw_mac  = res.group(1)
-    self.pnw_ip   = res.group(2)
-    self.pnw_mask = res.group(3)
-    self.pnw_nw   = [x for x in 
+    def __init__(self):
+        pass
+
+    def execute(self, cmd, log=False):
+        (rc, out, err) = module.run_command(cmd)
+        if rc != 0:
+            raise Exception(err)
+        if log:
+            executed_cmds.append(cmd)
+        if log and DEBUG:
+            executed_cmds.append('result:%s' % out)
+        return out
+
+
+class NWInfo(object):
+
+    def __init__(self):
+        cmd = Cmd()
+        self.bridge = re.search(r'.*Bridge "(\w+)".*',
+                                Cmd().execute('ovs-vsctl show')).group(1)
+        res = re.search(r'.*link/ether ([\w:]+) .*inet ([\d.]+)/([\d.]+).*',
+                        cmd.execute('ip addr show %s' % self.bridge), re.DOTALL)
+        self.pnw_mac = res.group(1)
+        self.pnw_ip = res.group(2)
+        self.pnw_mask = res.group(3)
+        self.pnw_nw = [x for x in
                        [re.match(r'^([\d.]+)/\d.+ .* src %s.*' % self.pnw_ip, line)
-                         for line in cmd.execute('ip route').split('\n')]
-                       if x != None][0].group(1)
+                        for line in cmd.execute('ip route').split('\n')]
+                       if x is not None][0].group(1)
 
-class RouteRegister:
-  def __init__(self):
-    self.cmd = Cmd()
-    self.nw = NWInfo()
 
-  def add_host_route(self):
-    dest = '%s/%s' % (module.params['virtual']['nw_addr'], module.params['virtual']['nw_mask'])
-    gw   = module.params['physical']['vrouter']['ip_addr']
-    dev  = self.nw.bridge
-    return self.cmd.execute(CMD01 % {'dest': dest, 'gw': gw, 'dev': dev}, log=True)
+class RouteRegister(object):
 
-  def add_container_routes(self):
-    dest = '%s/%s' % (self.nw.pnw_nw, self.nw.pnw_mask)
-    gw   = module.params['virtual']['vrouter']['ip_addr']
+    def __init__(self):
+        self.cmd = Cmd()
+        self.nw = NWInfo()
 
-    results = []
-    for line in open(module.params['cfile']):
-      params = line.split(',')
-      pid = params[1]
-      dev = params[3]
+    def add_host_route(self):
+        dest = '%s/%s' % (module.params['virtual']
+                          ['nw_addr'], module.params['virtual']['nw_mask'])
+        gw = module.params['physical']['vrouter']['ip_addr']
+        dev = self.nw.bridge
+        return self.cmd.execute(CMD01 % {'dest': dest, 'gw': gw, 'dev': dev}, log=True)
 
-      results.append(self.cmd.execute(CMD02 % {'pid': pid, 'dest': dest, 'gw': gw, 'dev': dev}, log=True))
+    def add_container_routes(self):
+        dest = '%s/%s' % (self.nw.pnw_nw, self.nw.pnw_mask)
+        gw = module.params['virtual']['vrouter']['ip_addr']
 
-    return results
+        results = []
+        for line in open(module.params['cfile']):
+            params = line.split(',')
+            pid = params[1]
+            dev = params[3]
+
+            results.append(self.cmd.execute(
+                CMD02 % {'pid': pid, 'dest': dest, 'gw': gw, 'dev': dev}, log=True))
+
+        return results
+
 
 def main():
-  try:
-    register = RouteRegister()
-    register.add_host_route()
-    register.add_container_routes()
+    try:
+        register = RouteRegister()
+        register.add_host_route()
+        register.add_container_routes()
 
-    module.exit_json(changed=True, rc=0, executed=executed_cmds)
+        module.exit_json(changed=True, rc=0, executed=executed_cmds)
 
-  except Exception, err:
-    module.fail_json(msg='%s' % err.message)
+    except Exception as err:
+        module.fail_json(msg='%s' % err.message)
 
 main()

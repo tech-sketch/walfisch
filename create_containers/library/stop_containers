@@ -6,9 +6,9 @@ from ansible.module_utils.basic import *
 DEBUG = False
 
 module = AnsibleModule(
-  argument_spec=dict(
-    cfile=dict(default=None, required=True),
-  ),
+    argument_spec=dict(
+        cfile=dict(default=None, required=True),
+    ),
 )
 executed_cmds = []
 
@@ -17,42 +17,47 @@ CMD02 = 'docker rm %(id)s'
 CMD03 = 'ovs-vsctl del-port %(bridge)s %(bif)s'
 CMD04 = 'rm -rf /var/run/netns/%(pid)s'
 
-class Cmd:
-  def __init__(self):
-    pass
 
-  def execute(self, cmd, log=False):
-    (rc, out, err) = module.run_command(cmd)
-    if rc != 0:
-      raise Exception, err
-    if log:
-      executed_cmds.append(cmd)
-    if log and DEBUG:
-      executed_cmds.append('result:%s' % out)
-    return out
+class Cmd(object):
 
-class NWInfo:
-  def __init__(self):
-    self.bridge = re.search(r'.*Bridge "(\w+)".*',
-                            Cmd().execute('ovs-vsctl show')).group(1)
+    def __init__(self):
+        pass
+
+    def execute(self, cmd, log=False):
+        (rc, out, err) = module.run_command(cmd)
+        if rc != 0:
+            raise Exception(err)
+        if log:
+            executed_cmds.append(cmd)
+        if log and DEBUG:
+            executed_cmds.append('result:%s' % out)
+        return out
+
+
+class NWInfo(object):
+
+    def __init__(self):
+        self.bridge = re.search(r'.*Bridge "(\w+)".*',
+                                Cmd().execute('ovs-vsctl show')).group(1)
+
 
 def main():
-  try:
-    cmd = Cmd()
-    pnw = NWInfo()
+    try:
+        cmd = Cmd()
+        pnw = NWInfo()
 
-    bridge = pnw.bridge
+        bridge = pnw.bridge
 
-    for line in open(module.params['cfile']):
-      params = line.split(',')
-      cmd.execute(CMD01 % {"id": params[0]}, log=True)
-      cmd.execute(CMD02 % {"id": params[0]}, log=True)
-      cmd.execute(CMD03 % {"bridge": bridge, "bif":params[2]}, log=True)
-      cmd.execute(CMD04 % {"pid": params[1]}, log=True)
-    
-    module.exit_json(changed=True, rc=0, executed=executed_cmds)
+        for line in open(module.params['cfile']):
+            params = line.split(',')
+            cmd.execute(CMD01 % {"id": params[0]}, log=True)
+            cmd.execute(CMD02 % {"id": params[0]}, log=True)
+            cmd.execute(CMD03 % {"bridge": bridge, "bif": params[2]}, log=True)
+            cmd.execute(CMD04 % {"pid": params[1]}, log=True)
 
-  except Exception, err:
-    module.fail_json(msg='%s' % err.message)
+        module.exit_json(changed=True, rc=0, executed=executed_cmds)
+
+    except Exception as err:
+        module.fail_json(msg='%s' % err.message)
 
 main()
