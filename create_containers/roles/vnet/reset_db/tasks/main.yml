@@ -1,3 +1,9 @@
+- name: start mysql
+  service: name="mysqld" state=started
+
+- name: start redis
+  service: name="redis" state=started
+
 - name: reset vnet db
   shell: bundle exec {{ item }}
          chdir={{ consts.vnet_path }}
